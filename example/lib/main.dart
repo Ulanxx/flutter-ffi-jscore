@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_ffi_jscore/flutter_ffi_jscore.dart';
 
 import 'json_viewer.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,11 +49,26 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
     initJsruntime();
   }
 
+  Future<String> getBundleData() async {
+    String bundleData = "";
+    try {
+      bundleData = await http.read('http://127.0.0.1:8080/bundle.js');
+    } catch (e) {} finally {
+      bundleData = await rootBundle.loadString("assets/bundle.js");
+    }
+    return bundleData;
+  }
+
   Future<void> initJsruntime() async {
-    String bundleJS = await rootBundle.loadString("assets/bundle.js");
+    String bundleJS = await getBundleData();
     javascriptRuntime.evaluate("var window = global = globalThis;");
     await javascriptRuntime.evaluateAsync(bundleJS + "");
     javascriptRuntime.evaluate("buildvdom()");
+    javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
+          this.setState(() {
+            _vDom = value.stringResult;
+          })
+        });
   }
 
   @override
@@ -68,27 +84,36 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
         title: const Text('FlutterJS Example'),
       ),
       body: Center(
-        child: _vDom == ""
-            ? Text("点击下方按钮")
-            : JsonViewerRoot(
-                jsonObj: json.decode(_vDom),
-                expandDeep: 4,
-              ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.transparent,
-        child: Image.asset('assets/js.ico'),
-        onPressed: () async {
-          try {
-            javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
-                  this.setState(() {
-                    _vDom = value.stringResult;
-                  })
-                });
-          } on PlatformException catch (e) {
-            print('ERRO: ${e.details}');
-          }
-        },
+        child: Column(
+          children: [
+            _vDom == ""
+                ? Text("点击下方按钮")
+                : JsonViewerRoot(
+                    jsonObj: json.decode(_vDom),
+                    expandDeep: 4,
+                  ),
+            TextButton(
+                onPressed: () {
+                  javascriptRuntime.evaluate("addvdom()");
+                  javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
+                        this.setState(() {
+                          _vDom = value.stringResult;
+                        })
+                      });
+                },
+                child: Text('点击添加children到dom')),
+            TextButton(
+                onPressed: () {
+                  javascriptRuntime.evaluate("removevdomChildren()");
+                  javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
+                        this.setState(() {
+                          _vDom = value.stringResult;
+                        })
+                      });
+                },
+                child: Text('点击添加删除vdom children'))
+          ],
+        ),
       ),
     );
   }
