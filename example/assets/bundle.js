@@ -1,7 +1,7 @@
 global.vdom = {};
 
-function buildVDom() {
-  return (vdom = {
+function buildvdom() {
+   vdom = {
     type: 'div',
     style: {
       flex: 1,
@@ -10,7 +10,7 @@ function buildVDom() {
     children: [
       {
         type: 'img',
-        source: 'assets/js.ico',
+        source: 'assets/flutter.png',
         style: {
           width: 100,
           height: 100,
@@ -24,5 +24,10 @@ function buildVDom() {
         },
       },
     ],
-  });
+  };
+}
+
+
+function getvdom(){
+	return JSON.stringify(vdom);
 }

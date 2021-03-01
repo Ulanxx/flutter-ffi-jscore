@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_ffi_jscore/flutter_ffi_jscore.dart';
 
+import 'json_viewer.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
@@ -32,6 +34,7 @@ class FlutterJsHomeScreen extends StatefulWidget {
 
 class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
   String _jsResult = '';
+  String _vDom = "";
   JavascriptRuntime javascriptRuntime;
 
   @override
@@ -49,7 +52,7 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
     String bundleJS = await rootBundle.loadString("assets/bundle.js");
     javascriptRuntime.evaluate("var window = global = globalThis;");
     await javascriptRuntime.evaluateAsync(bundleJS + "");
-    javascriptRuntime.evaluate("buildVDom()");
+    javascriptRuntime.evaluate("buildvdom()");
   }
 
   @override
@@ -65,24 +68,23 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
         title: const Text('FlutterJS Example'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('JS Evaluate Result: $_jsResult\n'),
-            SizedBox(
-              height: 20,
-            ),
-          ],
-        ),
+        child: _vDom == ""
+            ? Text("点击下方按钮")
+            : JsonViewerRoot(
+                jsonObj: json.decode(_vDom),
+                expandDeep: 4,
+              ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.transparent,
         child: Image.asset('assets/js.ico'),
         onPressed: () async {
           try {
-            javascriptRuntime
-                .evaluateAsync("console.log(vdom)")
-                .then((value) => {print(value)});
+            javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
+                  this.setState(() {
+                    _vDom = value.stringResult;
+                  })
+                });
           } on PlatformException catch (e) {
             print('ERRO: ${e.details}');
           }
