@@ -1,72 +1,94 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_ffi_jscore/flutter_jscore.dart';
 
-void main() => runApp(MyApp());
+import 'package:flutter/services.dart';
+import 'package:flutter_ffi_jscore/flutter_ffi_jscore.dart';
 
-class MyApp extends StatelessWidget {
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MyApp());
+}
+
+class MyApp extends StatefulWidget {
+  GlobalKey<ScaffoldState> scaffoldState = GlobalKey();
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'flutter_jscore',
-      home: _JSCorePage(),
+      home: FlutterJsHomeScreen(),
     );
   }
 }
 
-class _JSCorePage extends StatefulWidget {
+class FlutterJsHomeScreen extends StatefulWidget {
   @override
-  _JSCorePageState createState() => _JSCorePageState();
+  _FlutterJsHomeScreenState createState() => _FlutterJsHomeScreenState();
 }
 
-class _JSCorePageState extends State<_JSCorePage> {
-  TextEditingController _jsInputController;
-  JSContext _jsContext;
-
+class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
+  String _jsResult = '';
+  JavascriptRuntime javascriptRuntime;
   @override
   void initState() {
     super.initState();
-    _jsContext = JSContext.createInGroup();
-    _jsInputController = TextEditingController(text: '1 + 1');
+    javascriptRuntime = getJavascriptRuntime();
+    javascriptRuntime.onMessage('ConsoleLog2', (args) {
+      print('ConsoleLog2 (Dart Side): $args');
+      return json.encode(args);
+    });
+
+    initJsruntime();
+  }
+
+  Future<void> initJsruntime() async {
+    String bundle = await rootBundle.loadString("assets/bundle.js");
+    javascriptRuntime.evaluate("var window = global = globalThis;");
+    await javascriptRuntime.evaluateAsync(bundle + "");
   }
 
   @override
-  void dispose() {
-    _jsContext.release();
-    _jsInputController.dispose();
+  dispose() {
     super.dispose();
-  }
-
-  String _runJs(String script) {
-    var jsValue = _jsContext.evaluate(script);
-    return jsValue.string;
+    javascriptRuntime.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('JavaScriptCore for Flutter'),
+        title: const Text('FlutterJS Example'),
       ),
-      body: TextField(
-        maxLines: 50,
-        decoration: InputDecoration(
-          border: InputBorder.none,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text('JS Evaluate Result: $_jsResult\n'),
+            SizedBox(
+              height: 20,
+            ),
+          ],
         ),
-        controller: _jsInputController,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: Text('Result'),
-                content: Text(_runJs(_jsInputController.text ?? '')),
-              );
-            },
-          );
+        backgroundColor: Colors.transparent,
+        child: Image.asset('assets/js.ico'),
+        onPressed: () async {
+          try {
+            final expression = """plus(1,20);""";
+            String result = javascriptRuntime.evaluate(expression).stringResult;
+            print("result" + result);
+            setState(() {
+              _jsResult = result;
+            });
+          } on PlatformException catch (e) {
+            print('ERRO: ${e.details}');
+          }
         },
-        child: Icon(Icons.autorenew),
       ),
     );
   }
