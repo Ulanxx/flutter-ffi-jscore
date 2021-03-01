@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_ffi_jscore/flutter_jscore.dart';
 
 void main() => runApp(MyApp());
@@ -27,6 +28,12 @@ class _JSCorePageState extends State<_JSCorePage> {
     super.initState();
     _jsContext = JSContext.createInGroup();
     _jsInputController = TextEditingController(text: '1 + 1');
+    loadAsset();
+  }
+
+  Future<void> loadAsset() async {
+    String bundleStr = await rootBundle.loadString('assets/bundle.js');
+    print(bundleStr);
   }
 
   @override
@@ -37,7 +44,9 @@ class _JSCorePageState extends State<_JSCorePage> {
   }
 
   String _runJs(String script) {
-    var jsValue = _jsContext.evaluate(script);
+    print(script);
+    String _script = '1-1';
+    var jsValue = _jsContext.evaluate(_script);
     return jsValue.string;
   }
 
