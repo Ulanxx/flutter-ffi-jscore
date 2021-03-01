@@ -33,6 +33,7 @@ class FlutterJsHomeScreen extends StatefulWidget {
 class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
   String _jsResult = '';
   JavascriptRuntime javascriptRuntime;
+
   @override
   void initState() {
     super.initState();
@@ -41,14 +42,14 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
       print('ConsoleLog2 (Dart Side): $args');
       return json.encode(args);
     });
-
     initJsruntime();
   }
 
   Future<void> initJsruntime() async {
-    String bundle = await rootBundle.loadString("assets/bundle.js");
+    String bundleJS = await rootBundle.loadString("assets/bundle.js");
     javascriptRuntime.evaluate("var window = global = globalThis;");
-    await javascriptRuntime.evaluateAsync(bundle + "");
+    await javascriptRuntime.evaluateAsync(bundleJS + "");
+    javascriptRuntime.evaluate("buildVDom()");
   }
 
   @override
@@ -79,12 +80,9 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
         child: Image.asset('assets/js.ico'),
         onPressed: () async {
           try {
-            final expression = """plus(1,20);""";
-            String result = javascriptRuntime.evaluate(expression).stringResult;
-            print("result" + result);
-            setState(() {
-              _jsResult = result;
-            });
+            javascriptRuntime
+                .evaluateAsync("console.log(vdom)")
+                .then((value) => {print(value)});
           } on PlatformException catch (e) {
             print('ERRO: ${e.details}');
           }
