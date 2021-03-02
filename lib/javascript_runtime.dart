@@ -22,6 +22,7 @@ abstract class JavascriptRuntime {
     initChannelFunctions();
     _setupConsoleLog();
     _setupSetTimeout();
+    _setupGodzillaUIManager();
     return this;
   }
 
@@ -53,18 +54,6 @@ abstract class JavascriptRuntime {
   int executePendingJob();
 
   void _setupConsoleLog() {
-    evaluate("""
-    var console = {
-      log: function() {
-        sendMessage('ConsoleLog', JSON.stringify(['log', ...arguments]));
-      },
-      warn: function() {
-        sendMessage('ConsoleLog', JSON.stringify(['info', ...arguments]));
-      },
-      error: function() {
-        sendMessage('ConsoleLog', JSON.stringify(['error', ...arguments]));
-      }
-    }""");
     onMessage('ConsoleLog', (dynamic args) {
       print(args[1]);
     });
@@ -81,10 +70,7 @@ abstract class JavascriptRuntime {
           var timeoutIndex = '' + __NATIVE_FLUTTER_JS__setTimeoutCount;
           __NATIVE_FLUTTER_JS__setTimeoutCallbacks[timeoutIndex] =  fnTimeout;
           ;
-          // console.log(typeof(sendMessage));
-          // console.log('BLA');
           sendMessage('SetTimeout', JSON.stringify({ timeoutIndex, timeout}));
-            
         } catch (e) {
           console.error('ERROR HERE',e.message);
         }
@@ -111,11 +97,26 @@ abstract class JavascriptRuntime {
     });
   }
 
+  _setupGodzillaUIManager() {
+    final injectGodzillaUIManagerResult = evaluate("""
+      var __godzilla_ui_manager__ = {};
+    """);
+    print('INJECT GodzillaUIManager RESULT: $injectGodzillaUIManagerResult');
+    onMessage('updateRenderObject', (dynamic args) {
+      // 获取js构建dom
+      // 构建render object
+      print(args[1]);
+    });
+  }
+
   sendMessage({
     @required String channelName,
     @required List<String> args,
     String uuid,
   }) {
+    print("========= send message ==========");
+    print(channelName);
+    print(uuid);
     if (uuid != null) {
       evaluate(
           "DART_TO_QUICKJS_CHANNEL_sendMessage('$channelName', '${jsonEncode(args)}', '$uuid');");
