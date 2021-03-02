@@ -34,26 +34,24 @@ class FlutterJsHomeScreen extends StatefulWidget {
 }
 
 class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
-  String _jsResult = '';
-  String _vDom = "";
   JavascriptRuntime javascriptRuntime;
 
   @override
   void initState() {
     super.initState();
     javascriptRuntime = getJavascriptRuntime();
-    javascriptRuntime.onMessage('ConsoleLog2', (args) {
-      print('ConsoleLog2 (Dart Side): $args');
-      return json.encode(args);
-    });
     initJsruntime();
   }
 
   Future<String> getBundleData() async {
+    String kkintervalRuntime =
+        await rootBundle.loadString("assets/godzilla_runtime.js");
+    javascriptRuntime.evaluate(kkintervalRuntime + "");
+
     String bundleData = "";
     try {
-      bundleData = await http.read('http://127.0.0.1:8080/bundle.js');
-    } catch (e) {} finally {
+      bundleData = await http.read('http://127.0.0.1:3333/home.js');
+    } catch (e) {
       bundleData = await rootBundle.loadString("assets/bundle.js");
     }
     return bundleData;
@@ -63,12 +61,15 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
     String bundleJS = await getBundleData();
     javascriptRuntime.evaluate("var window = global = globalThis;");
     await javascriptRuntime.evaluateAsync(bundleJS + "");
-    javascriptRuntime.evaluate("buildvdom()");
-    javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
-          this.setState(() {
-            _vDom = value.stringResult;
-          })
-        });
+
+    javascriptRuntime
+        .evaluateAsync("Object.keys(window)")
+        .then((value) => print(value.stringResult));
+
+    javascriptRuntime.evaluateAsync("godzilla.render()");
+    javascriptRuntime
+        .evaluateAsync("__godzilla_ui_manager__")
+        .then((value) => {print(value.stringResult)});
   }
 
   @override
@@ -84,36 +85,7 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
         title: const Text('FlutterJS Example'),
       ),
       body: Center(
-        child: Column(
-          children: [
-            _vDom == ""
-                ? Text("点击下方按钮")
-                : JsonViewerRoot(
-                    jsonObj: json.decode(_vDom),
-                    expandDeep: 4,
-                  ),
-            TextButton(
-                onPressed: () {
-                  javascriptRuntime.evaluate("addvdom()");
-                  javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
-                        this.setState(() {
-                          _vDom = value.stringResult;
-                        })
-                      });
-                },
-                child: Text('点击添加children到dom')),
-            TextButton(
-                onPressed: () {
-                  javascriptRuntime.evaluate("removevdomChildren()");
-                  javascriptRuntime.evaluateAsync("getvdom()").then((value) => {
-                        this.setState(() {
-                          _vDom = value.stringResult;
-                        })
-                      });
-                },
-                child: Text('点击添加删除vdom children'))
-          ],
-        ),
+        child: Column(children: [Text("flutter ffi jscore")]),
       ),
     );
   }

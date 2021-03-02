@@ -39,6 +39,7 @@ class JavascriptCoreRuntime extends JavascriptRuntime {
     _sendMessageDartFunc = _sendMessage;
 
     Pointer<Utf8> funcNameCString = Utf8.toUtf8('sendMessage');
+    print(funcNameCString);
     var functionObject = jSObjectMakeFunctionWithCallback(
         _globalContext,
         jSStringCreateWithUTF8CString(funcNameCString),
@@ -113,7 +114,7 @@ class JavascriptCoreRuntime extends JavascriptRuntime {
     if (channelFunctionCallbacks.keys.contains(channelName)) return false;
 
     channelFunctionCallbacks[channelName] = fn;
-
+    print(channelFunctionCallbacks);
     return true;
   }
 

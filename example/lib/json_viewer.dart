@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 typedef OnBuildNode = Widget Function(
-    JsonNode parent,
-    String nodeName,
-    dynamic nodeValue,
-    );
+  JsonNode parent,
+  String nodeName,
+  dynamic nodeValue,
+);
 
 class JsonViewerRoot extends StatefulWidget {
   JsonViewerRoot({
@@ -27,10 +27,10 @@ class JsonViewerRoot extends StatefulWidget {
   OnBuildNode onBuildNode;
 
   Widget onBuildNodeDefault(
-      JsonNode parent,
-      String nodeName,
-      dynamic nodeValue,
-      ) {
+    JsonNode parent,
+    String nodeName,
+    dynamic nodeValue,
+  ) {
     JsonNode node;
     double leftOffset;
     if (nodeValue == null) {
@@ -136,7 +136,6 @@ class JsonViewerMapNode extends StatefulWidget
 class JsonViewerMapNodeState extends State<JsonViewerMapNode> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     widget.isOpen = widget.expandDeep > 0;
   }
@@ -295,7 +294,8 @@ class JsonViewerNode extends StatelessWidget implements JsonNode {
                 this.nodeValue == null ? "null" : this.nodeValue.toString(),
                 style: TextStyle(color: color),
                 softWrap: true,
-            ),),
+              ),
+            ),
           ],
         ),
       ),
